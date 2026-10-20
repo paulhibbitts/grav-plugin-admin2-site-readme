@@ -198,6 +198,15 @@ class Admin2SiteReadMePage extends HTMLElement {
         this.addAdminLinks();
         this.rememberTicks(guide.source);
 
+        // Hide File Title setting: a file's main title (a # heading, when it's the file's first heading) repeats
+        // what the Admin page's own title already says, so it's left out
+        if (guide.hide_title) {
+            const firstHeading = this.shadowRoot.querySelector('.guide h1, .guide h2, .guide h3, .guide h4, .guide h5, .guide h6');
+            if (firstHeading && firstHeading.tagName === 'H1') {
+                firstHeading.remove();
+            }
+        }
+
         this.addHeadingIds();
         this.addContentsList(guide.contents_levels);
 
@@ -316,8 +325,9 @@ class Admin2SiteReadMePage extends HTMLElement {
 
     /*
      * Adds an "On this page" list of the guide's sections: beside it on wider screens, in a box above it on
-     * narrower ones. deepestLevel (from the plugin's settings) is 2 for ## headings only, or 3 or 4 to list
-     * ### and #### headings too. Skipped when there are fewer than two ## sections.
+     * narrower ones. deepestLevel (from the plugin's settings) is 2 for ## headings only, or 3 (the default) or
+     * 4 to list ### and #### headings too, from the first ## heading on. Skipped when there are fewer than two
+     * ## sections.
      */
     addContentsList(deepestLevel) {
         if (this.shadowRoot.querySelectorAll('.guide h2').length < 2) {
@@ -326,10 +336,15 @@ class Admin2SiteReadMePage extends HTMLElement {
 
         // the headings to list, such as '.guide h2, .guide h3' for levels 2–3
         const selectors = [];
-        for (let level = 2; level <= (deepestLevel || 2); level++) {
+        for (let level = 2; level <= (deepestLevel || 3); level++) {
             selectors.push('.guide h' + level);
         }
-        const headings = [...this.shadowRoot.querySelectorAll(selectors.join(', '))];
+        let headings = [...this.shadowRoot.querySelectorAll(selectors.join(', '))];
+
+        // start at the first ## heading: headings before it belong to the file's title block (such as a subtitle
+        // under a README's title), not to its sections. There's always one, as the check above makes sure
+        const firstSection = headings.findIndex((heading) => heading.tagName === 'H2');
+        headings = headings.slice(firstSection);
 
         // one link for each heading, using the id addHeadingIds() gave it; the level-3 and level-4 classes indent
         // the deeper ones

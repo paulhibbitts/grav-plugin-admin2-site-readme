@@ -46,11 +46,23 @@ form:
       placeholder: 'Site ReadMe'
       size: medium
 
+    hide_title:
+      type: toggle
+      label: 'Hide File Title'
+      help: 'Hides the file''s main title, as the page already has one.'
+      highlight: 1
+      default: 1
+      options:
+        1: 'Yes'
+        0: 'No'
+      validate:
+        type: bool
+
     contents_levels:
       type: select
       label: 'On This Page Headings'
       help: 'The heading levels listed in the On this page list.'
-      default: 2
+      default: 3
       options:
         2: 'Level 2 (##)'
         3: 'Levels 2–3 (## and ###)'

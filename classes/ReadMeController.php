@@ -23,9 +23,9 @@ class ReadMeController extends AbstractApiController
     private const MAX_FILE_BYTES = 1024 * 1024;
 
     /**
-     * Sends { html, source, fetched_at, contents_levels } (plus a notice for an older copy), or { error }.
-     * The address can be https:// (another site) or user:// (this site); ?refresh=1 fetches a remote file
-     * again, skipping the cache.
+     * Sends { html, source, fetched_at, hide_title, contents_levels } (plus a notice for an older copy),
+     * or { error }. The address can be https:// (another site) or user:// (this site); ?refresh=1 fetches
+     * a remote file again, skipping the cache.
      */
     public function content(ServerRequestInterface $request): ResponseInterface
     {
@@ -47,8 +47,11 @@ class ReadMeController extends AbstractApiController
             return ApiResponse::create(['error' => 'The Markdown file\'s address needs to start with https:// (for a file on another site) or user:// (for a file in this site).']);
         }
 
-        // the deepest heading level in the "On this page" list: 2 (## headings only), 3 or 4
-        $guide['contents_levels'] = min(4, max(2, (int) ($this->config->get('plugins.admin2-site-readme.contents_levels') ?? 2)));
+        // whether to hide the file's main title, as the Admin page already has a title (on unless turned off)
+        $guide['hide_title'] = (bool) ($this->config->get('plugins.admin2-site-readme.hide_title') ?? true);
+
+        // the deepest heading level in the "On this page" list: 2 (## headings only), 3 (the default) or 4
+        $guide['contents_levels'] = min(4, max(2, (int) ($this->config->get('plugins.admin2-site-readme.contents_levels') ?? 3)));
 
         return ApiResponse::create($guide);
     }
