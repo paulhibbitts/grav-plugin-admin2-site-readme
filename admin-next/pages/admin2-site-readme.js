@@ -1,22 +1,20 @@
 /*
  * Admin2 Site ReadMe – the Site ReadMe page in Admin 2 - hibbittsdesign.org
  *
- * Admin 2 loads this file when someone opens the plugin's page, and shows the custom element it defines.
- * It's a "web component": a reusable HTML element made with plain JavaScript, so there's no build step.
- *
- * Admin 2 gives every plugin page a few things on window before this file runs:
+ * Admin 2 loads this file when the plugin's page is opened, and shows the element it defines: a "web
+ * component", made with plain JavaScript, so there's no build step. Admin 2 sets these on window first:
  *   __GRAV_PAGE_TAG        – the element name Admin 2 will show (grav-admin2-site-readme--page)
  *   __GRAV_API_SERVER_URL  – the site's address
  *   __GRAV_API_PREFIX      – where the API is on the site (usually /api/v1)
  *   __GRAV_API_TOKEN       – the signed-in person's access token, sent with each API request
  */
 
-// the element name Admin 2 expects; the fallback is the same name, in case it isn't given
+// the element name Admin 2 expects (with the same name as a fallback)
 const TAG = window.__GRAV_PAGE_TAG || 'grav-admin2-site-readme--page';
 
 /**
- * Asks this plugin's API address for the guide. With refresh, the server fetches the file again now
- * instead of using its cached copy. Returns { html, source, fetched_at } or { error }.
+ * Gets the guide from this plugin's API address: { html, source, fetched_at } or { error }.
+ * With refresh, the server fetches the file again, skipping its cached copy.
  */
 async function fetchGuide(refresh) {
     const address = (window.__GRAV_API_SERVER_URL || '') + (window.__GRAV_API_PREFIX || '/api/v1')
@@ -40,12 +38,11 @@ async function fetchGuide(refresh) {
 }
 
 /*
- * The page's styles. They use Admin 2's own colour settings (var(--foreground) and so on), so the guide
- * follows Admin's accent colour and Light or Dark mode; the second value in each var() is used if
- * Admin's setting isn't there.
+ * The page's styles use Admin 2's colours (var(--foreground) and so on), so they follow its accent colour and
+ * Light or Dark mode. The second value in each var() is a fallback.
  */
 const STYLES = `
-    /* the line below the guide: a thin line above it separates it from the guide */
+    /* the line below the guide, with its source and Refresh button */
     .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
         margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border, #e5e7eb);
         font-size: 0.875rem; color: var(--muted-foreground, #6b7280); }
@@ -55,11 +52,11 @@ const STYLES = `
     button:hover { border-color: var(--primary, #2563eb); }
     .message { padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border, #d1d5db);
         color: var(--muted-foreground, #6b7280); }
-    /* the note above an older copy of the guide, slimmer than a full message */
+    /* the note above an older copy, slimmer than a full message */
     .notice { max-width: 50rem; margin: 0 0 1.25rem; padding: 0.6rem 0.9rem; font-size: 0.875rem; }
 
-    /* The guide, with its "On this page" list beside it when there's room. This uses the page's own width (a
-       container query), not the window's, as Admin's sidebar takes up part of the window */
+    /* "On this page" sits beside the guide when there's room. A container query checks the page's own width,
+       not the window's, which includes Admin's sidebar */
     :host { display: block; container-type: inline-size; }
     .layout { display: block; }
     .main { min-width: 0; }
@@ -76,10 +73,10 @@ const STYLES = `
     .contents-side a { display: block; padding: 0.3rem 0.6rem; border-inline-start: 2px solid var(--border, #e5e7eb);
         font-size: 0.95rem; line-height: 1.4; color: var(--muted-foreground, #6b7280); text-decoration: none; }
     .contents-side a:hover, .contents-side a:focus-visible { color: var(--foreground, #111827); border-inline-start-color: var(--primary, #2563eb); }
-    /* the section being read, in the accent colour (see highlightCurrentSection()) */
-    .contents-side a.is-current { color: var(--primary, #2563eb); border-inline-start-color: var(--primary, #2563eb); font-weight: 600; }
+    /* the section being read (see highlightCurrentSection()) */
+    .contents-side a[aria-current="true"] { color: var(--primary, #2563eb); border-inline-start-color: var(--primary, #2563eb); font-weight: 600; }
 
-    /* on narrower screens: a slim box above the guide that opens when tapped, with a "›" that turns when open */
+    /* narrower screens: a box above the guide that opens when tapped; its "›" turns when open */
     .contents-box { margin: 0 0 1.5rem; padding: 0.5rem 0.875rem; border: 1px solid var(--border, #e5e7eb); border-radius: 0.5rem;
         max-width: 50rem; color: var(--foreground, #111827); }
     .contents-box summary { display: flex; justify-content: space-between; align-items: center; list-style: none;
@@ -96,7 +93,7 @@ const STYLES = `
     .guide [id] { scroll-margin-top: 1rem; }
     .guide [id]:focus { outline: none; }
 
-    /* the guide itself: readable line length and spacing for headings, lists, tables and code */
+    /* the guide itself: a readable line length and spacing */
     .guide { max-width: 50rem; line-height: 1.65; color: var(--foreground, #111827); }
     .guide h1, .guide h2, .guide h3, .guide h4 { line-height: 1.25; margin: 1.75em 0 0.6em; }
     .guide h1 { font-size: 1.9rem; margin-top: 0; }
@@ -116,7 +113,7 @@ const STYLES = `
     .guide th, .guide td { padding: 0.4rem 0.75rem; border: 1px solid var(--border, #e5e7eb); text-align: start; }
     .guide hr { border: 0; border-top: 1px solid var(--border, #e5e7eb); margin: 2em 0; }
 
-    /* GitHub-style notes (> [!NOTE], > [!TIP] and so on), with a coloured bar and label for each kind */
+    /* GitHub-style notes (> [!NOTE] and so on): a coloured bar and label for each kind */
     .guide .alert { color: var(--foreground, #111827); border-inline-start-color: var(--alert-colour); }
     .guide .alert-title { margin-bottom: 0.25em; font-weight: 600; color: var(--alert-colour); }
     .guide .alert > :last-child { margin-bottom: 0; }
@@ -129,8 +126,8 @@ const STYLES = `
 
 class Admin2SiteReadMePage extends HTMLElement {
     /*
-     * Runs when Admin 2 adds the element to its page. The element draws itself in a "shadow root", which
-     * keeps its styles and Admin's styles from affecting each other.
+     * Runs when Admin 2 adds the element. It draws itself in a "shadow root", so its styles and Admin's
+     * don't affect each other.
      */
     connectedCallback() {
         if (!this.shadowRoot) {
@@ -141,7 +138,8 @@ class Admin2SiteReadMePage extends HTMLElement {
 
     // Shows "Loading…", asks for the guide, then shows it (or the reason it can't be shown)
     async load(refresh) {
-        this.show('<p class="message">Loading…</p>');
+        // role="status" has screen readers announce the message when it appears
+        this.show('<p class="message" role="status">Loading…</p>');
 
         let guide;
         try {
@@ -151,33 +149,35 @@ class Admin2SiteReadMePage extends HTMLElement {
         }
 
         if (guide.error) {
-            this.show('<p class="message">' + escapeText(guide.error) + '</p>');
+            this.show('<p class="message" role="status">' + escapeText(guide.error) + '</p>');
             return;
         }
 
-        // Where the guide comes from: a link to a file on another site, or the name of a file in this site
-        // (a user:// address, which can't be opened as a link), and when it was fetched or last changed
+        // where the guide is from (a link, or a user:// file name, which can't be a link) and when it was
+        // fetched or changed
         const from = guide.local
             ? 'From ' + escapeText(guide.source) + (guide.fetched_at ? ', updated ' + escapeText(new Date(guide.fetched_at).toLocaleString()) : '')
             : 'From <a href="' + escapeText(guide.source) + '" target="_blank" rel="noopener">' + escapeText(shortAddress(guide.source)) + '</a>' +
               (guide.fetched_at ? ', fetched ' + escapeText(new Date(guide.fetched_at).toLocaleString()) : '');
 
-        // the guide's HTML was made safe to show on the server (see classes/ReadMeController.php); above it, a note
-        // when it's an older copy (the file couldn't be fetched just now); below it, where it's from and a Refresh
-        // button (the guide is in one column, with room beside it for an "On this page" list: see addContentsList())
+        // the guide (made safe on the server, in classes/ReadMeController.php), with a note above it for an older
+        // copy, and where it's from and a Refresh button below it. A file in this site is read fresh each time,
+        // so it has no Refresh button
         this.show(
             '<div class="layout">' +
                 '<div class="main">' +
-                    (guide.notice ? '<p class="message notice">' + escapeText(guide.notice) + '</p>' : '') +
+                    (guide.notice ? '<p class="message notice" role="status">' + escapeText(guide.notice) + '</p>' : '') +
                     '<article class="guide">' + guide.html + '</article>' +
                     '<div class="toolbar">' +
                         '<span>' + from + '</span>' +
-                        '<button type="button" class="refresh">Refresh</button>' +
+                        (guide.local ? '' : '<button type="button" class="refresh">Refresh</button>') +
                     '</div>' +
                 '</div>' +
             '</div>'
         );
-        this.shadowRoot.querySelector('.refresh').addEventListener('click', () => this.load(true));
+        if (!guide.local) {
+            this.shadowRoot.querySelector('.refresh').addEventListener('click', () => this.load(true));
+        }
 
         // links to other sites open in a new tab, so Admin stays open
         this.shadowRoot.querySelectorAll('.guide a[href^="http"]').forEach((link) => {
@@ -188,8 +188,7 @@ class Admin2SiteReadMePage extends HTMLElement {
         this.addHeadingIds();
         this.addContentsList();
 
-        // Links within the guide to one of its own sections (such as #quick-start, from a README's own list of
-        // contents) scroll to that section. Admin's address is never changed, even when there's no such section
+        // links to the guide's own sections (such as #quick-start) scroll there, and never change Admin's address
         this.shadowRoot.querySelectorAll('.guide a[href^="#"]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -202,9 +201,8 @@ class Admin2SiteReadMePage extends HTMLElement {
     }
 
     /*
-     * Gives each heading an id made from its text, the same way GitHub does, so links to a section written for
-     * GitHub (such as #quick-start for "Quick Start") work here too: lower case, punctuation removed and spaces
-     * changed to hyphens, with -1, -2 and so on added when two headings have the same text.
+     * Gives each heading an id from its text, as GitHub does, so a README's section links (such as #quick-start
+     * for "Quick Start") work: lower case, punctuation removed, spaces to hyphens, and -1, -2 for repeats.
      */
     addHeadingIds() {
         const usedIds = new Set();
@@ -214,7 +212,7 @@ class Admin2SiteReadMePage extends HTMLElement {
                 usedIds.add(heading.id);
                 return;
             }
-            // \p{L} and \p{N} match letters and numbers in any language, so headings in French or German work too
+            // \p{L} and \p{N} match letters and numbers in any language, such as é or ü
             const id = heading.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-') || 'section';
             let unique = id;
             for (let n = 1; usedIds.has(unique); n++) {
@@ -222,7 +220,7 @@ class Admin2SiteReadMePage extends HTMLElement {
             }
             usedIds.add(unique);
             heading.id = unique;
-            // so the heading can receive focus after a jump, for keyboard and screen reader users
+            // so the heading can take focus after a jump (for keyboard and screen reader users)
             heading.tabIndex = -1;
         });
     }
@@ -236,9 +234,8 @@ class Admin2SiteReadMePage extends HTMLElement {
     }
 
     /*
-     * Adds an "On this page" list of the guide's main sections (its h2 headings): beside the guide on wider
-     * screens, staying in view while scrolling, and as a box above it that opens when tapped on narrower ones.
-     * Not added for a guide with fewer than two sections.
+     * Adds an "On this page" list of the guide's h2 sections: beside it on wider screens, in a box above it on
+     * narrower ones. Skipped when there are fewer than two sections.
      */
     addContentsList() {
         const headings = [...this.shadowRoot.querySelectorAll('.guide h2')];
@@ -252,8 +249,7 @@ class Admin2SiteReadMePage extends HTMLElement {
             return '<li><a href="#' + id + '" data-target="' + id + '">' + escapeText(heading.textContent.trim()) + '</a></li>';
         }).join('');
 
-        // the same list twice: beside the guide (wider screens) and in a box above it (narrower ones);
-        // the styles show one or the other
+        // the same list twice; the styles show one or the other
         const side = document.createElement('nav');
         side.className = 'contents-side';
         side.setAttribute('aria-label', 'On this page');
@@ -265,8 +261,8 @@ class Admin2SiteReadMePage extends HTMLElement {
         box.innerHTML = '<summary>On this page</summary><ul>' + items + '</ul>';
         this.shadowRoot.querySelector('.main').prepend(box);
 
-        // Clicking a section scrolls to its heading. A plain #heading link isn't used for this, as Admin 2 is a
-        // single-page app, where changing the address could move Admin to a different screen
+        // scroll instead of following the #link: Admin 2 is a single-page app, so changing its address could
+        // move it to another screen
         this.shadowRoot.querySelectorAll('[data-target]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -278,9 +274,8 @@ class Admin2SiteReadMePage extends HTMLElement {
     }
 
     /*
-     * Highlights the section being read in the "On this page" column: the last heading that has scrolled up
-     * past the top part of the page. An IntersectionObserver tells the page whenever a heading moves into or
-     * out of view, which works whichever part of Admin is doing the scrolling.
+     * Highlights the section being read: the last heading above a line 150px from the top. An
+     * IntersectionObserver reruns this as headings cross that line, whichever part of Admin scrolls.
      */
     highlightCurrentSection(headings, side) {
         const highlight = () => {
@@ -291,8 +286,7 @@ class Admin2SiteReadMePage extends HTMLElement {
                 }
                 currentId = heading.id;
             }
-            // Near the end of the guide, the last sections may be too short to scroll up past that line: once
-            // the end of the guide is on screen, the last section that's in view is the current one
+            // at the end of the guide, short last sections can't reach that line, so use the last one in view
             const guideEnd = this.shadowRoot.querySelector('.guide').getBoundingClientRect().bottom;
             if (guideEnd <= window.innerHeight) {
                 for (const heading of headings) {
@@ -301,23 +295,27 @@ class Admin2SiteReadMePage extends HTMLElement {
                     }
                 }
             }
+            // aria-current tells screen readers which section is current; the styles highlight it too
             side.querySelectorAll('a').forEach((link) => {
-                link.classList.toggle('is-current', link.dataset.target === currentId);
+                if (link.dataset.target === currentId) {
+                    link.setAttribute('aria-current', 'true');
+                } else {
+                    link.removeAttribute('aria-current');
+                }
             });
         };
 
-        // stop watching the previous guide's headings, if the page was refreshed
+        // stop watching the previous guide's headings, after a Refresh
         if (this.observer) {
             this.observer.disconnect();
         }
-        // rootMargin moves the top edge the observer watches down by 150px, the same line as in highlight(),
-        // so it reports each heading as it scrolls past that line
+        // rootMargin moves the observer's top edge down to the same 150px line
         this.observer = new IntersectionObserver(highlight, { rootMargin: '-150px 0px 0px 0px', threshold: [0, 1] });
         headings.forEach((heading) => this.observer.observe(heading));
         highlight();
     }
 
-    // Runs when Admin 2 removes the page (such as when moving to another screen): stop watching the headings
+    // Runs when Admin 2 removes the page: stop watching the headings
     disconnectedCallback() {
         if (this.observer) {
             this.observer.disconnect();
@@ -343,7 +341,7 @@ function shortAddress(address) {
         .replace(/^https:\/\//, '');
 }
 
-// Tells the browser about the new element, once (Admin 2 may load this file again when the page is reopened)
+// Defines the element once (Admin 2 may load this file again when the page is reopened)
 if (!customElements.get(TAG)) {
     customElements.define(TAG, Admin2SiteReadMePage);
 }

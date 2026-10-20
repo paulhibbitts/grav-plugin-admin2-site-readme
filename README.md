@@ -16,7 +16,7 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 - **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
 - **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)
-- **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away
+- **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away (a file in the site itself is read fresh each time, so it has no Refresh button)
 
 On wider screens, an **On this page** list of the file's main sections sits beside it, highlighting the section being read; on narrower ones, it's a box above the file that opens when tapped.
 
@@ -26,6 +26,9 @@ Links to a section of the file, such as `#quick-start`, scroll to that section, 
 
 > [!TIP]
 > Relative links and images in the file are given full addresses, so a README's screenshots still show. Links to other files on GitHub open GitHub's page for that file. Images load from wherever they're hosted, so point the plugin at files you trust.
+
+> [!NOTE]
+> For a file in the site itself, images next to it (such as PNG or JPG) show, but Grav's web server settings block SVG images in `user/data` and all `.md` files, so those don't show or open. Copies of files from other sites are kept in Grav's cache, so leave it turned on (as it is by default) for **Keep a Copy For** and the last good copy to work.
 
 ## How It Works
 

@@ -9,28 +9,22 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Answers GET /admin2-site-readme/content: fetches the Markdown file named in the plugin's settings, turns it into
- * HTML, and sends it to the Site ReadMe page in Admin 2 - hibbittsdesign.org
+ * Answers GET /admin2-site-readme/content with the Markdown file from the plugin's settings, as HTML - hibbittsdesign.org
  *
- * The file is fetched here, on the server, rather than by the browser, because many sites (GitHub included)
- * don't let a browser on another site read their files directly. The result is cached for a while, so Admin
- * doesn't fetch the file again each time the page is opened.
+ * Remote files are fetched here, on the server, as many sites (GitHub included) don't let a browser on another
+ * site read their files.
  */
 class ReadMeController extends AbstractApiController
 {
-    // How long the last good copy of a remote file is kept, to show when the file can't be fetched (30 days)
+    // How long the last good copy of a remote file is kept (30 days)
     private const LAST_GOOD_COPY_SECONDS = 30 * 24 * 60 * 60;
 
-    // The largest file shown (1 MB, far more than any README), so an address that points at something huge
-    // by mistake doesn't slow Admin down
+    // The largest file shown (1 MB), in case the address points at something huge by mistake
     private const MAX_FILE_BYTES = 1024 * 1024;
 
     /**
-     * Sends the guide as { html, source, fetched_at } – plus a notice when it's an older copy – or { error }
-     * when it can't be shown. Add ?refresh=1 to fetch a remote file again now, instead of using the cached copy.
-     *
-     * The guide can be a file on another site (an https address) or a file in this site (a user:// address,
-     * such as user://data/site-readme.md).
+     * Sends { html, source, fetched_at } (plus a notice for an older copy), or { error }. The address can be
+     * https:// (another site) or user:// (this site); ?refresh=1 fetches a remote file again, skipping the cache.
      */
     public function content(ServerRequestInterface $request): ResponseInterface
     {
@@ -46,7 +40,7 @@ class ReadMeController extends AbstractApiController
             return ApiResponse::create($this->localGuide($address));
         }
 
-        // only https addresses for other sites, so the file can't be changed on its way to this site
+        // only https for other sites, so the file can't be changed on the way
         if (!str_starts_with($address, 'https://')) {
             return ApiResponse::create(['error' => 'The Markdown file\'s address needs to start with https:// (for a file on another site) or user:// (for a file in this site).']);
         }
@@ -57,18 +51,17 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * A guide from a file in this site, such as user://data/site-readme.md (the site's user/data folder).
-     * It's read each time, as reading a file in the site is quick, so it's never out of date.
+     * A file in this site, such as user://data/site-readme.md. It's read each time, as that's quick, so it's
+     * never out of date.
      */
     private function localGuide(string $address): array
     {
-        // where the file is on the server, using Grav's user:// address (false when it doesn't exist)
+        // where the file is on the server (false when it doesn't exist)
         $file = $this->grav['locator']->findResource($address, true);
         $userFolder = realpath($this->grav['locator']->findResource('user://', true));
         $file = $file ? realpath($file) : false;
 
-        // Only a Markdown file inside the site's user folder: this keeps the setting from being used to show
-        // other files on the server, such as the site's settings or accounts (which are .yaml files)
+        // only .md files inside user/, so the setting can't show other files, such as settings or accounts
         if (!$file || !$userFolder || !str_starts_with($file, $userFolder . DIRECTORY_SEPARATOR) || strtolower(pathinfo($file, PATHINFO_EXTENSION)) !== 'md') {
             return ['error' => 'The file ' . $address . ' wasn\'t found, or isn\'t a Markdown (.md) file in the site\'s user folder.'];
         }
@@ -77,8 +70,8 @@ class ReadMeController extends AbstractApiController
             return ['error' => 'The file ' . $address . ' is larger than 1 MB, so it isn\'t shown.'];
         }
 
-        // the file's own web address (such as https://example.org/user/data/site-readme.md), so its relative
-        // images and links can be given full addresses: Grav serves the files in user/ from that address
+        // the file's web address (such as https://example.org/user/data/site-readme.md), so its relative
+        // images and links can be given full addresses
         $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', substr($file, strlen(GRAV_ROOT) + 1));
         $webAddress = rtrim($this->grav['uri']->rootUrl(true), '/') . '/' . $relativePath;
 
@@ -91,16 +84,15 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * A guide from a file on another site (an https address), cached for the Keep a Copy For setting's minutes.
-     * Each copy is also saved as the "last good copy", kept for 30 days: if the file can't be fetched later
-     * (for example, the other site is down), that copy is shown, with a note, rather than only an error.
+     * A file on another site, cached for the Keep a Copy For setting's minutes. A "last good copy" is also kept
+     * for 30 days, and shown with a note if the file can't be fetched later (for example, the site is down).
      */
     private function remoteGuide(string $address, bool $refresh): array
     {
-        // a GitHub page address is changed to the address of the file itself (see rawGitHubAddress())
+        // a GitHub page address becomes the raw file's address
         $address = $this->rawGitHubAddress($address);
 
-        // the copies are kept under names made from the address, so changing the address fetches the new file
+        // the cached copies are named after the address, so a new address fetches the new file
         $cache = $this->grav['cache'];
         $cacheKey = 'admin2-site-readme-' . md5($address);
         $lastGoodKey = 'admin2-site-readme-last-good-' . md5($address);
@@ -142,16 +134,14 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * Turns Markdown into HTML that's safe to show in Admin, with full addresses for its relative links and
-     * images (based on $address, where the file is on the web).
+     * Markdown to HTML that's safe to show in Admin, with full addresses for relative links and images.
      */
     private function markdownToSafeHtml(string $markdown, string $address): string
     {
-        // READMEs often wrap Markdown in HTML, such as <div align="center"> around a title and badges. GitHub still
-        // reads the Markdown inside; Markdown Extra does that only when the tag has markdown="1", so add it
+        // GitHub reads Markdown inside HTML such as <div align="center">; Markdown Extra needs markdown="1" to do it
         $markdown = preg_replace('#<(div|details|section|center)\b(?![^>]*\bmarkdown=)([^>]*)>#i', '<$1$2 markdown="1">', $markdown);
 
-        // Markdown to HTML, with Markdown Extra's tables and footnotes, as Grav uses for pages
+        // Markdown Extra adds tables and footnotes, as in Grav pages
         $parser = new ParsedownExtra();
         $html = $parser->text($markdown);
 
@@ -162,14 +152,8 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * Turns GitHub-style notes into labelled boxes, as GitHub shows them. In Markdown, a note is a quote that
-     * starts with [!NOTE], [!TIP], [!IMPORTANT], [!WARNING] or [!CAUTION]:
-     *
-     *     > [!TIP]
-     *     > Text of the tip.
-     *
-     * Markdown Extra turns that into <blockquote><p>[!TIP] Text of the tip.</p></blockquote>, so the [!TIP] is
-     * replaced with a class for the box's colour and a "Tip" label.
+     * Turns GitHub-style notes (a quote starting with [!NOTE], [!TIP], [!IMPORTANT], [!WARNING] or [!CAUTION])
+     * into labelled boxes: the [!TIP] becomes a class for the box's colour and a "Tip" label.
      */
     private function githubNotes(string $html): string
     {
@@ -182,19 +166,15 @@ class ReadMeController extends AbstractApiController
             $html
         );
 
-        // when the [!TIP] line is followed by an empty quote line, the text is in a paragraph of its own,
-        // which leaves an empty paragraph behind
+        // a [!TIP] followed by an empty quote line leaves an empty paragraph, so remove it
         return preg_replace('#<p class="alert-title">(\w+)</p><p>\s*</p>#', '<p class="alert-title">$1</p>', $html);
     }
 
     /**
-     * Changes a GitHub page address (github.com/owner/repo/blob/branch/README.md) to the address of the file
-     * itself (raw.githubusercontent.com/owner/repo/branch/README.md), which gives the Markdown rather than a web
-     * page. Any other address is returned as it is.
-     *
-     * A file address can also name its branch as refs/heads/branch (such as .../repo/refs/heads/master/README.md,
-     * which GitHub's Raw button gives). GitHub serves the same file without refs/heads/, so it's left out: then
-     * the branch is always the part after the repository's name, which fullAddresses() relies on.
+     * Changes a GitHub page address (github.com/owner/repo/blob/branch/README.md) to the raw file's address
+     * (raw.githubusercontent.com/owner/repo/branch/README.md), which gives the Markdown. refs/heads/ is removed
+     * from raw addresses (GitHub serves the same file), so the branch always follows the repository's name, as
+     * fullAddresses() expects. Other addresses are returned as they are.
      */
     private function rawGitHubAddress(string $address): string
     {
@@ -206,39 +186,34 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * Removes anything from the HTML that could run code in Admin, as the file comes from another site:
-     * scripts and similar elements, "on..." attributes (such as onclick), and javascript: links. Style attributes
-     * are removed too, as GitHub does, so a file can't cover Admin with something that looks like part of it (such
-     * as a fake "sign in again" message). Ordinary HTML that READMEs often use, such as images, tables and
-     * <details>, is kept.
+     * Removes anything that could run code in Admin: scripts and similar elements, "on..." attributes (such as
+     * onclick) and javascript: links. Style attributes go too, as on GitHub, so a file can't cover Admin with
+     * something fake, such as a "sign in again" message.
      *
-     * The HTML is read with PHP's DOMDocument, the way a browser reads it, rather than searched as text: then
-     * tricks such as an unquoted javascript: link, or one written with HTML entities (&#106;avascript:), can't
-     * slip past, as the checks below see each attribute's real value.
+     * DOMDocument reads the HTML as a browser does, so the checks see each attribute's real value, and tricks
+     * such as &#106;avascript: can't slip past.
      */
     private function removeUnsafeHtml(string $html): string
     {
-        // elements that can run code or load other pages, removed along with everything inside them
+        // elements that can run code or load other pages, removed with their contents
         $unsafeElements = ['script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet',
             'form', 'template', 'base', 'meta', 'link', 'noscript',
-            // SVG elements that can change other attributes after the page loads (such as setting a link's
-            // address to javascript:), bring in content from other files, or hold other HTML; READMEs don't use
-            // them, as their badges and logos are images. DOMDocument names them in lower case, as here
+            // SVG elements that can change attributes later (such as a link to javascript:), load other files
+            // or hold HTML; READMEs don't use them. DOMDocument names them in lower case, as here
             'animate', 'set', 'animatemotion', 'animatetransform', 'use', 'foreignobject'];
         // attributes that hold an address, which mustn't be a javascript: (or similar) address
         $addressAttributes = ['href', 'src', 'xlink:href', 'action', 'formaction', 'poster', 'background'];
 
         $document = new \DOMDocument();
-        // The HTML goes inside one <div>, so DOMDocument has a single element to hold it, and the xml encoding line
-        // in front tells DOMDocument it's UTF-8 (otherwise characters such as é or – would be garbled). The libxml
-        // settings keep it from adding <html> and <body>, and quiet its warnings about HTML5 elements it doesn't
-        // know, such as <details>
+        // One wrapping <div> gives DOMDocument a single element to hold, and the xml line says it's UTF-8 (or é
+        // and – would be garbled). The settings stop it adding <html> and <body>, and quiet its warnings about
+        // HTML5 elements such as <details>
         $previous = libxml_use_internal_errors(true);
         $document->loadHTML('<?xml encoding="utf-8"?><div id="admin2-site-readme">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
 
-        // a copy of the list of elements, as removing elements while going through the live list would skip some
+        // a copy of the list, as removing elements from the live list would skip some
         $elements = iterator_to_array($document->getElementsByTagName('*'));
         foreach ($elements as $element) {
             if (in_array(strtolower($element->nodeName), $unsafeElements, true)) {
@@ -249,7 +224,7 @@ class ReadMeController extends AbstractApiController
             // a copy of the attribute list too, for the same reason
             foreach (iterator_to_array($element->attributes) as $attribute) {
                 $name = strtolower($attribute->nodeName);
-                // the address without spaces or invisible characters, which browsers ignore (java script: still runs)
+                // spaces and invisible characters are removed first, as browsers ignore them (java script: still runs)
                 $value = strtolower(preg_replace('/[\s\x00-\x1f]+/', '', $attribute->nodeValue));
 
                 $runsCode = str_starts_with($name, 'on');
@@ -276,18 +251,16 @@ class ReadMeController extends AbstractApiController
     }
 
     /**
-     * Gives relative links and images a full address, based on where the Markdown file is, so that (for
-     * example) an image at images/screenshot.png next to a README on GitHub still shows in Admin.
+     * Gives relative links and images a full address, based on where the file is, so a README's screenshots
+     * still show.
      */
     private function fullAddresses(string $html, string $address): string
     {
         // the folder the file is in, such as https://raw.githubusercontent.com/owner/repo/branch/
         $folder = substr($address, 0, strrpos($address, '/') + 1);
-        // where addresses starting with / begin: the top of the site, such as https://example.org...
-        // (http:// too, for a file in a site on this computer, such as http://localhost)
+        // where addresses starting with / begin: the top of the site (http:// too, for a site on this computer)...
         $top = preg_replace('#^(https?://[^/]+).*$#', '$1', $address);
-        // ...but for a file on GitHub, the top of its repository (https://raw.githubusercontent.com/owner/repo/branch),
-        // as that's what / means in a GitHub README
+        // ...or, on GitHub, the top of the repository, as / means in a GitHub README
         $onGitHub = (bool) preg_match('#^(https://raw\.githubusercontent\.com/[^/]+/[^/]+/[^/]+)/#', $address, $repository);
         if ($onGitHub) {
             $top = $repository[1];
@@ -301,14 +274,12 @@ class ReadMeController extends AbstractApiController
             if ($value === '' || preg_match('#^([a-z][a-z0-9+.-]*:|//|\#)#i', $value)) {
                 return $match[0];
             }
-            // an address starting with / is from the top; anything else is in the same folder as the file
-            // ($top has no / at its end and $folder has one, so /docs/a.md and docs/a.md each join up correctly;
-            // the value is already HTML-escaped, so only the part added to it is escaped here)
+            // an address starting with / joins $top, anything else joins the file's folder ($top has no ending /,
+            // $folder has one). The address is already HTML-escaped, so only the added part is escaped
             $start = str_starts_with($value, '/') ? $top : $folder;
             $full = htmlspecialchars($start, ENT_QUOTES) . $value;
 
-            // on GitHub, links (not images) go to GitHub's normal page view of the file, which is easier to read
-            // than the file itself: raw.githubusercontent.com/owner/repo/branch/... becomes github.com/owner/repo/blob/branch/...
+            // on GitHub, links (not images) go to GitHub's page for the file, which is easier to read
             if ($onGitHub && strtolower($attribute) === 'href') {
                 $full = preg_replace('#^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/#', 'https://github.com/$1/$2/blob/', $full);
             }

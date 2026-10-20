@@ -7,11 +7,9 @@ namespace Grav\Plugin;
 use Grav\Common\Plugin;
 use RocketTheme\Toolbox\Event\Event;
 
-// Tells PHP where to find this plugin's classes (such as Grav\Plugin\Admin2SiteReadMe\ReadMeController, in
-// classes/ReadMeController.php), so each one is loaded the first time it's needed. Loading the controller straight
-// away wouldn't work: it builds on the API plugin's AbstractApiController, which isn't loaded yet when this file is.
-// (And it can't be loaded in onApiRegisterRoutes either: the API plugin caches its list of addresses, so on most
-// requests that event doesn't run, but the class is still needed to answer)
+// Loads this plugin's classes (such as classes/ReadMeController.php) when first needed. They can't be loaded up
+// front, as they build on the API plugin, which loads after this one; nor in onApiRegisterRoutes, as the API
+// caches its routes, so that event doesn't run on most requests
 spl_autoload_register(function (string $class): void {
     $prefix = 'Grav\\Plugin\\Admin2SiteReadMe\\';
     if (str_starts_with($class, $prefix)) {
@@ -23,17 +21,14 @@ spl_autoload_register(function (string $class): void {
 });
 
 /**
- * Admin2 Site ReadMe – adds a "Site ReadMe" item to the Admin 2 sidebar, which shows a Markdown file (such as a
- * README on GitHub) inside Admin, so the people editing a site can read its instructions where they work.
+ * Admin2 Site ReadMe – adds a "Site ReadMe" item to the Admin 2 sidebar, showing a Markdown file (such as a
+ * README on GitHub) inside Admin.
  *
- * How the pieces fit together:
- *   1. onApiSidebarItems   – adds the sidebar item (its label and icon come from the plugin's settings)
- *   2. onApiPluginPageInfo – tells Admin 2 what the page is called; Admin 2 then loads the page's
- *                            web component from admin-next/pages/admin2-site-readme.js
- *   3. onApiRegisterRoutes – adds the API address the web component asks for the guide's content
- *                            (/admin2-site-readme/content), answered by classes/ReadMeController.php
+ *   1. onApiSidebarItems   – adds the sidebar item
+ *   2. onApiPluginPageInfo – describes the page; Admin 2 then loads admin-next/pages/admin2-site-readme.js
+ *   3. onApiRegisterRoutes – adds the API address the page gets its content from (classes/ReadMeController.php)
  *
- * Needs Grav 2 with Admin 2 and the Grav API plugin, which provide these events - hibbittsdesign.org
+ * Needs Grav 2, Admin 2 and the Grav API plugin - hibbittsdesign.org
  */
 class Admin2SiteReadMePlugin extends Plugin
 {
@@ -62,9 +57,9 @@ class Admin2SiteReadMePlugin extends Plugin
             'label'     => $this->sidebarLabel(),
             // a Font Awesome icon name, such as fa-book-open
             'icon'      => $this->config->get('plugins.admin2-site-readme.sidebar_icon') ?: 'fa-book-open',
-            // the page in Admin 2 that the item opens (Admin 2 shows a plugin's page at /plugin/{plugin name})
+            // the page it opens (Admin 2 shows plugin pages at /plugin/{plugin name})
             'route'     => '/plugin/admin2-site-readme',
-            // where it sits in the sidebar: lower numbers appear first
+            // lower numbers appear higher in the sidebar
             'priority'  => (int) ($this->config->get('plugins.admin2-site-readme.sidebar_priority') ?? 5),
             // anyone who can use Admin can read the guide
             'authorize' => 'api.access',
@@ -74,8 +69,7 @@ class Admin2SiteReadMePlugin extends Plugin
     }
 
     /**
-     * Describes the plugin's page to Admin 2. "component" means the page is drawn by this plugin's own web
-     * component (admin-next/pages/admin2-site-readme.js), rather than as a settings form.
+     * Describes the page to Admin 2: "component" means this plugin's web component draws it, not a settings form.
      */
     public function onApiPluginPageInfo(Event $event): void
     {
@@ -94,8 +88,7 @@ class Admin2SiteReadMePlugin extends Plugin
     }
 
     /**
-     * Adds the API address that the page's web component calls to get the guide's content.
-     * With the API plugin's usual prefix, it's /api/v1/admin2-site-readme/content.
+     * Adds the API address the page gets its content from (usually /api/v1/admin2-site-readme/content).
      */
     public function onApiRegisterRoutes(Event $event): void
     {
