@@ -75,6 +75,11 @@ const STYLES = `
     .contents-side a:hover, .contents-side a:focus-visible { color: var(--foreground, #111827); border-inline-start-color: var(--primary, #2563eb); }
     /* the section being read (see highlightCurrentSection()) */
     .contents-side a[aria-current="true"] { color: var(--primary, #2563eb); border-inline-start-color: var(--primary, #2563eb); font-weight: 600; }
+    /* deeper headings (### and ####), indented a step per level and a little smaller */
+    .contents-side .level-3 a { padding-inline-start: 1.4rem; font-size: 0.875rem; }
+    .contents-side .level-4 a { padding-inline-start: 2.2rem; font-size: 0.875rem; }
+    .contents-box .level-3 { margin-inline-start: 1rem; }
+    .contents-box .level-4 { margin-inline-start: 2rem; }
 
     /* narrower screens: a box above the guide that opens when tapped; its "›" turns when open */
     .contents-box { margin: 0 0 1.5rem; padding: 0.5rem 0.875rem; border: 1px solid var(--border, #e5e7eb); border-radius: 0.5rem;
@@ -113,15 +118,20 @@ const STYLES = `
     .guide th, .guide td { padding: 0.4rem 0.75rem; border: 1px solid var(--border, #e5e7eb); text-align: start; }
     .guide hr { border: 0; border-top: 1px solid var(--border, #e5e7eb); margin: 2em 0; }
 
-    /* GitHub-style notes (> [!NOTE] and so on): a coloured bar and label for each kind */
+    /* task list items (- [ ] in Markdown), with the checkbox in place of the bullet */
+    .guide li.task { list-style: none; }
+    .guide .task-box { margin: 0 0.5em 0 -1.35em; vertical-align: -0.1em; accent-color: var(--primary, #2563eb); }
+
+    /* GitHub-style notes (> [!NOTE] and so on): a coloured bar and label for each kind. light-dark() picks the
+       first colour in Light mode and the second in Dark mode (Admin 2 tells the browser which), as on GitHub */
     .guide .alert { color: var(--foreground, #111827); border-inline-start-color: var(--alert-colour); }
     .guide .alert-title { margin-bottom: 0.25em; font-weight: 600; color: var(--alert-colour); }
     .guide .alert > :last-child { margin-bottom: 0; }
-    .guide .alert-note { --alert-colour: #0969da; }
-    .guide .alert-tip { --alert-colour: #1a7f37; }
-    .guide .alert-important { --alert-colour: #8250df; }
-    .guide .alert-warning { --alert-colour: #9a6700; }
-    .guide .alert-caution { --alert-colour: #cf222e; }
+    .guide .alert-note { --alert-colour: light-dark(#0969da, #4493f8); }
+    .guide .alert-tip { --alert-colour: light-dark(#1a7f37, #3fb950); }
+    .guide .alert-important { --alert-colour: light-dark(#8250df, #ab7df8); }
+    .guide .alert-warning { --alert-colour: light-dark(#9a6700, #d29922); }
+    .guide .alert-caution { --alert-colour: light-dark(#cf222e, #f85149); }
 `;
 
 class Admin2SiteReadMePage extends HTMLElement {
@@ -185,8 +195,11 @@ class Admin2SiteReadMePage extends HTMLElement {
             link.rel = 'noopener';
         });
 
+        this.addAdminLinks();
+        this.rememberTicks(guide.source);
+
         this.addHeadingIds();
-        this.addContentsList();
+        this.addContentsList(guide.contents_levels);
 
         // links to the guide's own sections (such as #quick-start) scroll there, and never change Admin's address
         this.shadowRoot.querySelectorAll('.guide a[href^="#"]').forEach((link) => {
@@ -195,6 +208,74 @@ class Admin2SiteReadMePage extends HTMLElement {
                 const id = decodeURIComponent(link.getAttribute('href').slice(1));
                 if (this.shadowRoot.getElementById(id)) {
                     this.scrollToSection(id);
+                }
+            });
+        });
+    }
+
+    /*
+     * Links with an admin: address open a screen in Admin, such as admin:/pages for Pages or admin:/config/site
+     * for the site's settings, so the same file works on any site, whatever its address. Each link gets the
+     * screen's real address (so it can still be opened in a new tab), and a plain click moves Admin there
+     * without reloading the page, using the navigate function Admin 2 provides.
+     */
+    addAdminLinks() {
+        // where Admin is, such as /admin (Admin 2 provides it; the page's own address is the fallback)
+        const adminBase = window.__GRAV_ADMIN_BASE || location.pathname.split('/plugin/')[0];
+
+        this.shadowRoot.querySelectorAll('.guide a[href^="admin:"]').forEach((link) => {
+            // admin:/pages and admin:pages both become /pages
+            const screen = '/' + link.getAttribute('href').slice('admin:'.length).replace(/^\/+/, '');
+            link.href = adminBase + screen;
+
+            link.addEventListener('click', (event) => {
+                // Ctrl, Cmd or Shift with a click still opens a new tab or window, as usual
+                if (window.__GRAV_NAVIGATE && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                    event.preventDefault();
+                    window.__GRAV_NAVIGATE(adminBase + screen);
+                }
+            });
+        });
+    }
+
+    /*
+     * Task list checkboxes (- [ ] in Markdown) can be ticked off, so people can follow a list of steps. What's
+     * ticked is remembered in this browser only, for this file; until then, the file's own [x] ticks are shown.
+     */
+    rememberTicks(source) {
+        const boxes = [...this.shadowRoot.querySelectorAll('.guide .task-box')];
+        if (boxes.length === 0) {
+            return;
+        }
+
+        const storageKey = 'admin2-site-readme-ticks:' + source;
+        // the numbers of the ticked boxes, such as [0, 2]; the browser's storage can be turned off (such as in
+        // a private window), so if it can't be read, nothing is remembered
+        let ticked = null;
+        try {
+            ticked = JSON.parse(localStorage.getItem(storageKey));
+        } catch (error) {
+            ticked = null;
+        }
+
+        boxes.forEach((box, number) => {
+            // the step's text, so screen readers say what each checkbox is for
+            box.setAttribute('aria-label', box.parentElement.textContent.trim());
+            if (Array.isArray(ticked)) {
+                box.checked = ticked.includes(number);
+            }
+
+            box.addEventListener('change', () => {
+                const nowTicked = [];
+                boxes.forEach((otherBox, otherNumber) => {
+                    if (otherBox.checked) {
+                        nowTicked.push(otherNumber);
+                    }
+                });
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(nowTicked));
+                } catch (error) {
+                    // storage is turned off: the ticks still work, but aren't remembered
                 }
             });
         });
@@ -234,19 +315,29 @@ class Admin2SiteReadMePage extends HTMLElement {
     }
 
     /*
-     * Adds an "On this page" list of the guide's h2 sections: beside it on wider screens, in a box above it on
-     * narrower ones. Skipped when there are fewer than two sections.
+     * Adds an "On this page" list of the guide's sections: beside it on wider screens, in a box above it on
+     * narrower ones. deepestLevel (from the plugin's settings) is 2 for ## headings only, or 3 or 4 to list
+     * ### and #### headings too. Skipped when there are fewer than two ## sections.
      */
-    addContentsList() {
-        const headings = [...this.shadowRoot.querySelectorAll('.guide h2')];
-        if (headings.length < 2) {
+    addContentsList(deepestLevel) {
+        if (this.shadowRoot.querySelectorAll('.guide h2').length < 2) {
             return;
         }
 
-        // one link for each heading, using the id addHeadingIds() gave it
+        // the headings to list, such as '.guide h2, .guide h3' for levels 2–3
+        const selectors = [];
+        for (let level = 2; level <= (deepestLevel || 2); level++) {
+            selectors.push('.guide h' + level);
+        }
+        const headings = [...this.shadowRoot.querySelectorAll(selectors.join(', '))];
+
+        // one link for each heading, using the id addHeadingIds() gave it; the level-3 and level-4 classes indent
+        // the deeper ones
         const items = headings.map((heading) => {
             const id = escapeText(heading.id);
-            return '<li><a href="#' + id + '" data-target="' + id + '">' + escapeText(heading.textContent.trim()) + '</a></li>';
+            // the heading's level from its tag name: H3 becomes level-3
+            const level = 'level-' + heading.tagName.slice(1);
+            return '<li class="' + level + '"><a href="#' + id + '" data-target="' + id + '">' + escapeText(heading.textContent.trim()) + '</a></li>';
         }).join('');
 
         // the same list twice; the styles show one or the other

@@ -13,16 +13,21 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 
 - **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for a ReadMe that isn't on GitHub or is private
 - **Page Title** – the page's title in Admin (Site ReadMe by default)
+- **On This Page Headings** – the heading levels in the On this page list: level 2 (`##`, the default), or down to level 3 or 4 for a longer file
 - **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
 - **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)
 - **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away (a file in the site itself is read fresh each time, so it has no Refresh button)
+
+To let editors update the ReadMe in Admin, make it a page, such as `user://pages/site-readme/default.md`, and set its Published option to No. Its front matter isn't shown.
 
 On wider screens, an **On this page** list of the file's main sections sits beside it, highlighting the section being read; on narrower ones, it's a box above the file that opens when tapped.
 
 If a file on another site can't be fetched (for example, the site is down), the last copy fetched in the past 30 days is shown, with a note. These copies are kept in Grav's cache, so leave it turned on (as it is by default). Files larger than 1 MB aren't shown.
 
 For a file in the site itself, images next to it (such as PNG or JPG) show, but Grav's web server settings block SVG images in `user/data` and all `.md` files, so those don't show or open.
+
+Links with an `admin:` address open a screen in Admin, such as `[Pages](admin:/pages)` or `[Site settings](admin:/config/site)`, and work on any site, whatever its address (on GitHub itself, they don't open). Task lists (`- [ ] Step`) show as checkboxes that can be ticked off, remembered in each person's browser. Ticks follow each step's position, so adding steps can shift them.
 
 Links to a section of the file, such as `#quick-start`, scroll to that section, and GitHub-style notes (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]` and `> [!CAUTION]`) are shown as labelled boxes, as on GitHub.
 

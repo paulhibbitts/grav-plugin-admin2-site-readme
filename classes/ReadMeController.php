@@ -23,8 +23,9 @@ class ReadMeController extends AbstractApiController
     private const MAX_FILE_BYTES = 1024 * 1024;
 
     /**
-     * Sends { html, source, fetched_at } (plus a notice for an older copy), or { error }. The address can be
-     * https:// (another site) or user:// (this site); ?refresh=1 fetches a remote file again, skipping the cache.
+     * Sends { html, source, fetched_at, contents_levels } (plus a notice for an older copy), or { error }.
+     * The address can be https:// (another site) or user:// (this site); ?refresh=1 fetches a remote file
+     * again, skipping the cache.
      */
     public function content(ServerRequestInterface $request): ResponseInterface
     {
@@ -37,17 +38,19 @@ class ReadMeController extends AbstractApiController
         }
 
         if (str_starts_with($address, 'user://')) {
-            return ApiResponse::create($this->localGuide($address));
-        }
-
-        // only https for other sites, so the file can't be changed on the way
-        if (!str_starts_with($address, 'https://')) {
+            $guide = $this->localGuide($address);
+        } elseif (str_starts_with($address, 'https://')) {
+            $refresh = ($request->getQueryParams()['refresh'] ?? '') === '1';
+            $guide = $this->remoteGuide($address, $refresh);
+        } else {
+            // only https for other sites, so the file can't be changed on the way
             return ApiResponse::create(['error' => 'The Markdown file\'s address needs to start with https:// (for a file on another site) or user:// (for a file in this site).']);
         }
 
-        $refresh = ($request->getQueryParams()['refresh'] ?? '') === '1';
+        // the deepest heading level in the "On this page" list: 2 (## headings only), 3 or 4
+        $guide['contents_levels'] = min(4, max(2, (int) ($this->config->get('plugins.admin2-site-readme.contents_levels') ?? 2)));
 
-        return ApiResponse::create($this->remoteGuide($address, $refresh));
+        return ApiResponse::create($guide);
     }
 
     /**
@@ -138,6 +141,10 @@ class ReadMeController extends AbstractApiController
      */
     private function markdownToSafeHtml(string $markdown, string $address): string
     {
+        // A Grav page (or a file from a site such as Jekyll) can start with "front matter": settings such as its
+        // title, between two --- lines. They aren't meant to be read, so they're left out
+        $markdown = preg_replace('/^(\xEF\xBB\xBF)?---\R.*?\R---(\R|$)/s', '', $markdown, 1);
+
         // GitHub reads Markdown inside HTML such as <div align="center">; Markdown Extra needs markdown="1" to do it
         $markdown = preg_replace('#<(div|details|section|center)\b(?![^>]*\bmarkdown=)([^>]*)>#i', '<$1$2 markdown="1">', $markdown);
 
@@ -146,6 +153,7 @@ class ReadMeController extends AbstractApiController
         $html = $parser->text($markdown);
 
         $html = $this->githubNotes($html);
+        $html = $this->taskLists($html);
         $html = $this->removeUnsafeHtml($html);
 
         return $this->fullAddresses($html, $address);
@@ -168,6 +176,18 @@ class ReadMeController extends AbstractApiController
 
         // a [!TIP] followed by an empty quote line leaves an empty paragraph, so remove it
         return preg_replace('#<p class="alert-title">(\w+)</p><p>\s*</p>#', '<p class="alert-title">$1</p>', $html);
+    }
+
+    /**
+     * Turns task list items (- [ ] Step or - [x] Done in Markdown) into checkboxes, as GitHub shows them.
+     * Markdown Extra gives <li>[ ] Step</li>, or <li><p>[ ] Step</p></li> when the list has blank lines in it.
+     */
+    private function taskLists(string $html): string
+    {
+        return preg_replace_callback('#<li>(\s*<p>)?\s*\[( |x|X)\]\s+#', function (array $match) {
+            $checked = strtolower($match[2]) === 'x' ? ' checked' : '';
+            return '<li class="task">' . $match[1] . '<input type="checkbox" class="task-box"' . $checked . '> ';
+        }, $html);
     }
 
     /**

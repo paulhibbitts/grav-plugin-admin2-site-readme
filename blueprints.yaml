@@ -5,8 +5,8 @@ version: 0.9.0
 description: 'Adds a Site ReadMe item to the Admin 2 sidebar, showing a Markdown file (such as a README on GitHub) inside Admin.'
 icon: book-open
 author:
-  name: Paul Hibbitts
-  email: paul@hibbittsdesign.org
+  name: HibbittsDesign.org
+  email: hello@hibbittsdesign.org
   url: https://hibbittsdesign.org
 homepage: https://github.com/paulhibbitts/grav-plugin-admin2-site-readme
 keywords: admin, admin2, readme, guide, documentation, markdown
@@ -45,6 +45,18 @@ form:
       help: 'The title of the page in Admin. Defaults to Site ReadMe.'
       placeholder: 'Site ReadMe'
       size: medium
+
+    contents_levels:
+      type: select
+      label: 'On This Page Headings'
+      help: 'The heading levels listed in the On this page list.'
+      default: 2
+      options:
+        2: 'Level 2 (##)'
+        3: 'Levels 2–3 (## and ###)'
+        4: 'Levels 2–4 (## to ####)'
+      validate:
+        type: int
 
     sidebar_label:
       type: text
