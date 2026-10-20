@@ -1,0 +1,36 @@
+# Admin2 Site ReadMe Plugin
+
+**Admin2 Site ReadMe** is a [Grav](https://getgrav.org) plugin for Grav 2 that adds a **Site ReadMe** item to the Admin 2 sidebar. It shows a Markdown file, such as a README on GitHub, inside Admin, so the people editing a site can read its instructions where they work – and the instructions stay up to date, as they're fetched from the file itself.
+
+## Installation
+
+1. Download the plugin, unzip it into `user/plugins`, and rename the folder to `admin2-site-readme`
+2. In Admin 2, open **Plugins → Admin2 Site ReadMe** and set **Markdown File Address**, for example `https://github.com/owner/repository/blob/main/README.md`
+
+Needs Grav 2, Admin 2 and the Grav API plugin.
+
+## Settings
+
+- **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for instructions that aren't on GitHub or are private
+- **Page Title** – the page's title in Admin (Site ReadMe by default)
+- **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
+- **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
+- **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)
+- **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away
+
+On wider screens, an **On this page** list of the file's main sections sits beside it, highlighting the section being read; on narrower ones, it's a box above the file that opens when tapped.
+
+If a file on another site can't be fetched (for example, the site is down), the last copy fetched in the past 30 days is shown, with a note. Files larger than 1 MB aren't shown.
+
+Links to a section of the file, such as `#quick-start`, scroll to that section, and GitHub-style notes (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]` and `> [!CAUTION]`) are shown as labelled boxes, as on GitHub.
+
+> [!TIP]
+> Relative links and images in the file are given full addresses, so a README's screenshots still show. Links to other files on GitHub open GitHub's page for that file. Images load from wherever they're hosted, so point the plugin at files you trust.
+
+## How It Works
+
+The file is read on the server, turned into HTML with Grav's Markdown parser (with Markdown Extra), and anything that could run code (scripts, `on…` attributes and `javascript:` links) is removed before it's shown, along with `style` attributes, as on GitHub. The page itself is a web component (`admin-next/pages/admin2-site-readme.js`), the way Admin 2 adds plugin pages, and it follows Admin's Light or Dark mode and accent colour.
+
+## License
+
+MIT – see [LICENSE](LICENSE). By [Paul Hibbitts](https://hibbittsdesign.org).

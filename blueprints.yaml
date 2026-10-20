@@ -1,0 +1,79 @@
+name: Admin2 Site ReadMe
+slug: admin2-site-readme
+type: plugin
+version: 0.9.0
+description: 'Adds a Site ReadMe item to the Admin 2 sidebar, showing a Markdown file (such as a README on GitHub) inside Admin.'
+icon: book-open
+author:
+  name: Paul Hibbitts
+  email: paul@hibbittsdesign.org
+  url: https://hibbittsdesign.org
+homepage: https://github.com/paulhibbitts/grav-plugin-admin2-site-readme
+keywords: admin, admin2, readme, guide, documentation, markdown
+bugs: https://github.com/paulhibbitts/grav-plugin-admin2-site-readme/issues
+license: MIT
+
+dependencies:
+  - { name: grav, version: '>=2.0.0' }
+  - { name: api, version: '>=1.0.0' }
+  - { name: admin2, version: '>=2.0.0' }
+
+form:
+  validation: strict
+  fields:
+    enabled:
+      type: toggle
+      label: PLUGIN_ADMIN.PLUGIN_STATUS
+      highlight: 1
+      default: 1
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+
+    markdown_url:
+      type: text
+      label: 'Markdown File Address'
+      description: 'An https address, such as a README on GitHub, or a Markdown file in this site, such as user://data/site-readme.md.'
+      placeholder: 'https://github.com/owner/repository/blob/main/README.md'
+      size: x-large
+
+    page_title:
+      type: text
+      label: 'Page Title'
+      help: 'The title of the page in Admin. Defaults to Site ReadMe.'
+      placeholder: 'Site ReadMe'
+      size: medium
+
+    sidebar_label:
+      type: text
+      label: 'Sidebar Label'
+      help: 'The name of the item in the Admin sidebar. Defaults to the Page Title.'
+      placeholder: 'Site ReadMe'
+      size: medium
+
+    sidebar_icon:
+      type: text
+      label: 'Sidebar Icon'
+      help: 'A Font Awesome icon name, such as fa-book-open or fa-circle-question.'
+      placeholder: 'fa-book-open'
+      size: medium
+
+    sidebar_priority:
+      type: number
+      label: 'Sidebar Position'
+      help: 'Lower numbers appear higher in the sidebar. Defaults to 5.'
+      size: x-small
+      validate:
+        type: int
+        min: 0
+
+    cache_minutes:
+      type: number
+      label: 'Keep a Copy For (Minutes)'
+      help: 'How long to keep the fetched file before fetching it again. Defaults to 60.'
+      size: x-small
+      validate:
+        type: int
+        min: 1
