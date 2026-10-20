@@ -1,6 +1,6 @@
 # Admin2 Site ReadMe Plugin
 
-**Admin2 Site ReadMe** is a [Grav](https://getgrav.org) plugin for Grav 2 that adds a **Site ReadMe** item to the Admin 2 sidebar. It shows a Markdown file, such as a README on GitHub, inside Admin, so the people editing a site can read its instructions where they work – and the instructions stay up to date, as they're fetched from the file itself.
+**Admin2 Site ReadMe** is a [Grav](https://getgrav.org) plugin for Grav 2 that adds a **Site ReadMe** item to the Admin 2 sidebar. It shows a Markdown file, such as a README on GitHub, inside Admin, so the people editing a site can read its ReadMe, such as how-tos, guidelines or notes, where they work – and it stays up to date, as it's fetched from the file itself.
 
 ## Installation
 
@@ -11,7 +11,7 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 
 ## Settings
 
-- **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for instructions that aren't on GitHub or are private
+- **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for a ReadMe that isn't on GitHub or is private
 - **Page Title** – the page's title in Admin (Site ReadMe by default)
 - **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
@@ -20,15 +20,14 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 
 On wider screens, an **On this page** list of the file's main sections sits beside it, highlighting the section being read; on narrower ones, it's a box above the file that opens when tapped.
 
-If a file on another site can't be fetched (for example, the site is down), the last copy fetched in the past 30 days is shown, with a note. Files larger than 1 MB aren't shown.
+If a file on another site can't be fetched (for example, the site is down), the last copy fetched in the past 30 days is shown, with a note. These copies are kept in Grav's cache, so leave it turned on (as it is by default). Files larger than 1 MB aren't shown.
+
+For a file in the site itself, images next to it (such as PNG or JPG) show, but Grav's web server settings block SVG images in `user/data` and all `.md` files, so those don't show or open.
 
 Links to a section of the file, such as `#quick-start`, scroll to that section, and GitHub-style notes (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]` and `> [!CAUTION]`) are shown as labelled boxes, as on GitHub.
 
 > [!TIP]
 > Relative links and images in the file are given full addresses, so a README's screenshots still show. Links to other files on GitHub open GitHub's page for that file. Images load from wherever they're hosted, so point the plugin at files you trust.
-
-> [!NOTE]
-> For a file in the site itself, images next to it (such as PNG or JPG) show, but Grav's web server settings block SVG images in `user/data` and all `.md` files, so those don't show or open. Copies of files from other sites are kept in Grav's cache, so leave it turned on (as it is by default) for **Keep a Copy For** and the last good copy to work.
 
 ## How It Works
 
