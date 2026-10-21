@@ -15,7 +15,7 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 - **Page Title** – the page's title in Admin (Site ReadMe by default)
 - **Hide File Title** – hides the file's title (its first heading), as the page already has one: a `#` title (the default), a `#` or `##` title (for files that use `##` for their title), or neither. A `###` subtitle straight after the title is hidden too
 - **On This Page Headings** – the heading levels in the On this page list: levels 2–3 (`##` and `###`, the default), level 2 only for a shorter list, or down to level 4
-- **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
+- **Sidebar Label** – the item's name in the sidebar (the Page Title by default). For a long name, a `|` marks where it may break onto a second line, such as `Site Instructions | and ReadMe`
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
 - **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)
 - **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away (a file in the site itself is read fresh each time, so it has no Refresh button)

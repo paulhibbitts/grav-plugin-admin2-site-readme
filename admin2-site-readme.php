@@ -113,6 +113,27 @@ class Admin2SiteReadMePlugin extends Plugin
     {
         $label = trim((string) $this->config->get('plugins.admin2-site-readme.sidebar_label'));
 
-        return $label !== '' ? $label : $this->pageTitle();
+        return $label !== '' ? $this->chosenLineBreak($label) : $this->pageTitle();
+    }
+
+    /**
+     * A | in the label marks the one place a long label may break onto a second line in the sidebar, such as
+     * "Site Instructions | and ReadMe". The sidebar shows the label as plain text, so a real line break can't be
+     * used; instead, the spaces in each part become no-break spaces (so the label can't break there), and the
+     * | becomes an ordinary space. A label that fits shows on one line, without the |.
+     */
+    private function chosenLineBreak(string $label): string
+    {
+        if (!str_contains($label, '|')) {
+            return $label;
+        }
+
+        $parts = [];
+        foreach (explode('|', $label) as $part) {
+            // \u{00A0} is the no-break space character
+            $parts[] = str_replace(' ', "\u{00A0}", trim($part));
+        }
+
+        return trim(implode(' ', $parts));
     }
 }

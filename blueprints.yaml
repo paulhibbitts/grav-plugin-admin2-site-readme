@@ -73,7 +73,7 @@ form:
     sidebar_label:
       type: text
       label: 'Sidebar Label'
-      help: 'The name of the item in the Admin sidebar. Defaults to the Page Title.'
+      help: 'The name of the item in the Admin sidebar (the Page Title by default); a | marks where a long name may break.'
       placeholder: 'Site ReadMe'
       size: medium
 
