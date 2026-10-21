@@ -20,7 +20,7 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 - **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)
 - **Keep a Copy For (Minutes)** – how long to keep the fetched file before fetching it again (60 by default). The page's **Refresh** button fetches it again straight away (a file in the site itself is read fresh each time, so it has no Refresh button)
 
-To let editors update the ReadMe in Admin, make it a page, such as `user://pages/site-readme/default.md`, and set its Published option to No. Its front matter isn't shown.
+To let editors update the ReadMe in Admin, make it a page, such as `user://pages/site-readme/default.md`, and set its Published option to No. Its front matter isn't shown, and nor are `[raw]` markers around shortcode examples.
 
 On wider screens, an **On this page** list of the file's main sections sits beside it, highlighting the section being read; on narrower ones, it's a box above the file that opens when tapped.
 

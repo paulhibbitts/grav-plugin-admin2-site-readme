@@ -149,6 +149,10 @@ class ReadMeController extends AbstractApiController
         // title, between two --- lines. They aren't meant to be read, so they're left out
         $markdown = preg_replace('/^(\xEF\xBB\xBF)?---\R.*?\R---(\R|$)/s', '', $markdown, 1);
 
+        // Grav pages wrap shortcode examples in [raw]...[/raw], so Grav shows them rather than running them. Shortcodes
+        // never run here, so the markers themselves are left out and only the examples show
+        $markdown = preg_replace('#\[/?raw\]#i', '', $markdown);
+
         // GitHub reads Markdown inside HTML such as <div align="center">; Markdown Extra needs markdown="1" to do it
         $markdown = preg_replace('#<(div|details|section|center)\b(?![^>]*\bmarkdown=)([^>]*)>#i', '<$1$2 markdown="1">', $markdown);
 
