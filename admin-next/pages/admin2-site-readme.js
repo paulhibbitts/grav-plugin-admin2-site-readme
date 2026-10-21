@@ -198,13 +198,24 @@ class Admin2SiteReadMePage extends HTMLElement {
         this.addAdminLinks();
         this.rememberTicks(guide.source);
 
-        // Hide File Title setting: a file's main title (a # heading, when it's the file's first heading) repeats
-        // what the Admin page's own title already says, so it's left out
-        if (guide.hide_title) {
-            const firstHeading = this.shadowRoot.querySelector('.guide h1, .guide h2, .guide h3, .guide h4, .guide h5, .guide h6');
-            if (firstHeading && firstHeading.tagName === 'H1') {
-                firstHeading.remove();
+        // Hide File Title setting: the file's title (its first heading) repeats what the Admin page's own title
+        // already says, so it's left out, and so isn't in the "On this page" list either. 1 hides a # title, 2 a
+        // # or ## title, and 0 neither
+        let titleLevels = [];
+        if (guide.hide_title === 1) {
+            titleLevels = ['H1'];
+        } else if (guide.hide_title === 2) {
+            titleLevels = ['H1', 'H2'];
+        }
+        const firstHeading = this.shadowRoot.querySelector('.guide h1, .guide h2, .guide h3, .guide h4, .guide h5, .guide h6');
+        if (firstHeading && titleLevels.includes(firstHeading.tagName)) {
+            // a ### (or smaller) heading straight after the title is its subtitle, such as a README's tagline, so
+            // it's left out too; a ## straight after the title starts a real section, so it stays
+            const nextElement = firstHeading.nextElementSibling;
+            if (nextElement && ['H3', 'H4', 'H5', 'H6'].includes(nextElement.tagName)) {
+                nextElement.remove();
             }
+            firstHeading.remove();
         }
 
         this.addHeadingIds();

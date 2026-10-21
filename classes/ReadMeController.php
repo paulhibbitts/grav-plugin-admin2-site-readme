@@ -47,8 +47,9 @@ class ReadMeController extends AbstractApiController
             return ApiResponse::create(['error' => 'The Markdown file\'s address needs to start with https:// (for a file on another site) or user:// (for a file in this site).']);
         }
 
-        // whether to hide the file's main title, as the Admin page already has a title (on unless turned off)
-        $guide['hide_title'] = (bool) ($this->config->get('plugins.admin2-site-readme.hide_title') ?? true);
+        // which title to hide, as the Admin page already has one: 0 none, 1 a # title (the default), 2 a # or ##
+        // title. A site that saved the earlier Yes/No switch has true or false, which become 1 or 0 here
+        $guide['hide_title'] = min(2, max(0, (int) ($this->config->get('plugins.admin2-site-readme.hide_title') ?? 1)));
 
         // the deepest heading level in the "On this page" list: 2 (## headings only), 3 (the default) or 4
         $guide['contents_levels'] = min(4, max(2, (int) ($this->config->get('plugins.admin2-site-readme.contents_levels') ?? 3)));

@@ -13,7 +13,7 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 
 - **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for a ReadMe that isn't on GitHub or is private
 - **Page Title** – the page's title in Admin (Site ReadMe by default)
-- **Hide File Title** – hides the file's main title (its first `#` heading), as the page already has one (on by default)
+- **Hide File Title** – hides the file's title (its first heading), as the page already has one: a `#` title (the default), a `#` or `##` title (for files that use `##` for their title), or neither. A `###` subtitle straight after the title is hidden too
 - **On This Page Headings** – the heading levels in the On this page list: levels 2–3 (`##` and `###`, the default), level 2 only for a shorter list, or down to level 4
 - **Sidebar Label** – the item's name in the sidebar (the Page Title by default)
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`

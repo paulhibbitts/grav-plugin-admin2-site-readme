@@ -47,16 +47,16 @@ form:
       size: medium
 
     hide_title:
-      type: toggle
+      type: select
       label: 'Hide File Title'
-      help: 'Hides the file''s main title, as the page already has one.'
-      highlight: 1
+      help: 'Hides the file''s title (its first heading), as the page already has one.'
       default: 1
       options:
-        1: 'Yes'
         0: 'No'
+        1: 'A # title'
+        2: 'A # or ## title'
       validate:
-        type: bool
+        type: int
 
     contents_levels:
       type: select

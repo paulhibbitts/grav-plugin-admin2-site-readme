@@ -1,7 +1,7 @@
 enabled: true
 markdown_url: ''
 page_title: 'Site ReadMe'
-hide_title: true
+hide_title: 1
 contents_levels: 3
 sidebar_label: ''
 sidebar_icon: fa-book-open
