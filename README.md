@@ -19,9 +19,9 @@ Needs Grav 2, Admin 2 and the Grav API plugin.
 ## Settings
 
 - **Markdown File Address** – the https address of the file, such as a GitHub page address (`github.com/…/blob/…`) or file address (`raw.githubusercontent.com/…`). It can also be a Markdown file in the site itself, such as `user://data/site-readme.md` (in the site's `user/data` folder), for a ReadMe that isn't on GitHub or is private
-- **Page Title** – the page's title in Admin (Site ReadMe by default)
+- **Page Title** – the page's title in Admin (Site ReadMe by default), such as Workshop Guide, Project Info or Style Guide
 - **Hide File Title** – hides the file's title (its first heading), as the page already has one: a `#` title (the default), a `#` or `##` title (for files that use `##` for their title), or neither. A `###` subtitle straight after the title is hidden too
-- **On This Page Headings** – the heading levels in the On this page list: levels 2–3 (`##` and `###`, the default), level 2 only for a shorter list, or down to level 4
+- **On This Page Headings** – the heading levels in the On this page list: levels 2–3 (`##` and `###`, the default), level 2 only for a shorter list, or down to level 4. In a file that uses `###` for its sections, such as many Grav pages, the list starts there instead
 - **Sidebar Label** – the item's name in the sidebar (the Page Title by default). For a long name, a `|` marks where it may break onto a second line, such as `Site Instructions | and ReadMe`
 - **Sidebar Icon** – a Font Awesome icon name, such as `fa-book-open` (the default) or `fa-circle-question`
 - **Sidebar Position** – lower numbers appear higher in the sidebar (5 by default)

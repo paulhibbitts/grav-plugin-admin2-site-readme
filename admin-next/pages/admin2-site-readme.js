@@ -58,9 +58,11 @@ const STYLES = `
     /* the note above an older copy, slimmer than a full message */
     .notice { max-width: 50rem; margin: 0 0 1.25rem; padding: 0.6rem 0.9rem; font-size: 0.875rem; }
 
-    /* "On this page" sits beside the guide when there's room. A container query checks the page's own width,
-       not the window's, which includes Admin's sidebar */
-    :host { display: block; container-type: inline-size; }
+    /* "On this page" sits beside the guide when there's room. A container query (container-type) checks the
+       page's own width, not the window's, which includes Admin's sidebar. position: relative keeps the
+       screen-reader-only notes (see .visually-hidden) inside this page; without it, they're placed against the
+       whole Admin window, which then scrolls past the end of the page */
+    :host { display: block; position: relative; container-type: inline-size; }
     .layout { display: block; }
     .main { min-width: 0; }
     .contents-side { display: none; }
@@ -352,33 +354,46 @@ class Admin2SiteReadMePage extends HTMLElement {
 
     /*
      * Adds an "On this page" list of the guide's sections: beside it on wider screens, in a box above it on
-     * narrower ones. deepestLevel (from the plugin's settings) is 2 for ## headings only, or 3 (the default) or
-     * 4 to list ### and #### headings too, from the first ## heading on. Skipped when there are fewer than two
-     * ## sections.
+     * narrower ones. The sections are the file's ## headings, or, in a file with fewer than two of them (such as
+     * a Grav page that uses ### for its sections), the top heading level it does use. deepestLevel (from the
+     * plugin's settings) is 2 to list just those headings, or 3 (the default) or 4 to list one or two levels
+     * below them too. Skipped when the file has fewer than two sections.
      */
     addContentsList(deepestLevel) {
-        if (this.shadowRoot.querySelectorAll('.guide h2').length < 2) {
+        // the top level of the file's sections: ## if it has at least two, otherwise ###, ####, and so on
+        let topLevel = 0;
+        for (let level = 2; level <= 6; level++) {
+            if (this.shadowRoot.querySelectorAll('.guide h' + level).length >= 2) {
+                topLevel = level;
+                break;
+            }
+        }
+        if (topLevel === 0) {
             return;
         }
 
-        // the headings to list, such as '.guide h2, .guide h3' for levels 2–3
+        // the headings to list, such as '.guide h2, .guide h3' for ## sections at the default setting; the
+        // setting counts levels from the sections' own level, so for ### sections that's '.guide h3, .guide h4'
+        const levelsBelow = (deepestLevel || 3) - 2;
+        const lowestLevel = Math.min(6, topLevel + levelsBelow);
         const selectors = [];
-        for (let level = 2; level <= (deepestLevel || 3); level++) {
+        for (let level = topLevel; level <= lowestLevel; level++) {
             selectors.push('.guide h' + level);
         }
         let headings = [...this.shadowRoot.querySelectorAll(selectors.join(', '))];
 
-        // start at the first ## heading: headings before it belong to the file's title block (such as a subtitle
-        // under a README's title), not to its sections. There's always one, as the check above makes sure
-        const firstSection = headings.findIndex((heading) => heading.tagName === 'H2');
+        // start at the first section heading: headings before it belong to the file's title block (such as a
+        // subtitle under a README's title), not to its sections. There's always one, as the check above makes sure
+        const firstSection = headings.findIndex((heading) => heading.tagName === 'H' + topLevel);
         headings = headings.slice(firstSection);
 
-        // one link for each heading, using the id addHeadingIds() gave it; the level-3 and level-4 classes indent
-        // the deeper ones
+        // one link for each heading, using the id addHeadingIds() gave it. The level-3 and level-4 classes indent
+        // headings one and two levels below the sections, whatever level the sections are
         const items = headings.map((heading) => {
             const id = escapeText(heading.id);
-            // the heading's level from its tag name: H3 becomes level-3
-            const level = 'level-' + heading.tagName.slice(1);
+            // how far below the sections this heading is: 0 for a section itself, so level-2, then level-3, …
+            const depth = Number(heading.tagName.slice(1)) - topLevel;
+            const level = 'level-' + (2 + depth);
             return '<li class="' + level + '"><a href="#' + id + '" data-target="' + id + '">' + escapeText(heading.textContent.trim()) + '</a></li>';
         }).join('');
 
