@@ -12,6 +12,9 @@
 // the element name Admin 2 expects (with the same name as a fallback)
 const TAG = window.__GRAV_PAGE_TAG || 'grav-admin2-site-readme--page';
 
+// added to links that open in a new tab, for screen readers (see .visually-hidden in the styles)
+const NEW_TAB_NOTE = '<span class="visually-hidden"> (opens in a new tab)</span>';
+
 /**
  * Gets the guide from this plugin's API address: { html, source, fetched_at } or { error }.
  * With refresh, the server fetches the file again, skipping its cached copy.
@@ -74,7 +77,7 @@ const STYLES = `
         font-size: 0.95rem; line-height: 1.4; color: var(--muted-foreground, #6b7280); text-decoration: none; }
     .contents-side a:hover, .contents-side a:focus-visible { color: var(--foreground, #111827); border-inline-start-color: var(--primary, #2563eb); }
     /* the section being read (see highlightCurrentSection()) */
-    .contents-side a[aria-current="true"] { color: var(--primary, #2563eb); border-inline-start-color: var(--primary, #2563eb); font-weight: 600; }
+    .contents-side a[aria-current="location"] { color: var(--primary, #2563eb); border-inline-start-color: var(--primary, #2563eb); font-weight: 600; }
     /* deeper headings (### and ####), indented a step per level and a little smaller */
     .contents-side .level-3 a { padding-inline-start: 1.4rem; font-size: 0.875rem; }
     .contents-side .level-4 a { padding-inline-start: 2.2rem; font-size: 0.875rem; }
@@ -87,12 +90,17 @@ const STYLES = `
     .contents-box summary { display: flex; justify-content: space-between; align-items: center; list-style: none;
         font-weight: 600; cursor: pointer; }
     .contents-box summary::-webkit-details-marker { display: none; }
-    .contents-box summary::after { content: "\\203A"; font-size: 1.4em; line-height: 1; opacity: 0.6; transition: transform 0.15s ease; }
+    /* the / "" part marks the arrow as decoration, so screen readers don't read it out; browsers that don't
+       understand it use the plain content line before it */
+    .contents-box summary::after { content: "\\203A"; content: "\\203A" / ""; font-size: 1.4em; line-height: 1; opacity: 0.6; transition: transform 0.15s ease; }
     .contents-box[open] summary::after { transform: rotate(90deg); }
     .contents-box ul { margin: 0.5rem 0 0.25rem; }
     .contents-box li { margin: 0.3rem 0; }
     .contents-box a { color: var(--primary, #2563eb); }
     @media (prefers-reduced-motion: reduce) { .contents-box summary::after { transition: none; } }
+
+    /* text for screen readers only, such as "(opens in a new tab)": kept on the page, but not shown */
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
     /* a little space above a heading when it's jumped to */
     .guide [id] { scroll-margin-top: 1rem; }
@@ -167,7 +175,7 @@ class Admin2SiteReadMePage extends HTMLElement {
         // fetched or changed
         const from = guide.local
             ? 'From ' + escapeText(guide.source) + (guide.fetched_at ? ', updated ' + escapeText(new Date(guide.fetched_at).toLocaleString()) : '')
-            : 'From <a href="' + escapeText(guide.source) + '" target="_blank" rel="noopener">' + escapeText(shortAddress(guide.source)) + '</a>' +
+            : 'From <a href="' + escapeText(guide.source) + '" target="_blank" rel="noopener">' + escapeText(shortAddress(guide.source)) + NEW_TAB_NOTE + '</a>' +
               (guide.fetched_at ? ', fetched ' + escapeText(new Date(guide.fetched_at).toLocaleString()) : '');
 
         // the guide (made safe on the server, in classes/ReadMeController.php), with a note above it for an older
@@ -186,14 +194,14 @@ class Admin2SiteReadMePage extends HTMLElement {
             '</div>'
         );
         if (!guide.local) {
-            this.shadowRoot.querySelector('.refresh').addEventListener('click', () => this.load(true));
+            const refreshButton = this.shadowRoot.querySelector('.refresh');
+            refreshButton.addEventListener('click', () => this.load(true));
+            // after a Refresh, the page is drawn again, button and all; putting focus back on the new button keeps
+            // keyboard and screen reader users where they were
+            if (refresh) {
+                refreshButton.focus({ preventScroll: true });
+            }
         }
-
-        // links to other sites open in a new tab, so Admin stays open
-        this.shadowRoot.querySelectorAll('.guide a[href^="http"]').forEach((link) => {
-            link.target = '_blank';
-            link.rel = 'noopener';
-        });
 
         this.addAdminLinks();
         this.rememberTicks(guide.source);
@@ -220,6 +228,14 @@ class Admin2SiteReadMePage extends HTMLElement {
 
         this.addHeadingIds();
         this.addContentsList(guide.contents_levels);
+
+        // links to other sites open in a new tab, so Admin stays open; a hidden note tells screen reader users.
+        // This comes after the headings' ids and the "On this page" list, so the note isn't part of their text
+        this.shadowRoot.querySelectorAll('.guide a[href^="http"]').forEach((link) => {
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.insertAdjacentHTML('beforeend', NEW_TAB_NOTE);
+        });
 
         // links to the guide's own sections (such as #quick-start) scroll there, and never change Admin's address
         this.shadowRoot.querySelectorAll('.guide a[href^="#"]').forEach((link) => {
@@ -412,10 +428,11 @@ class Admin2SiteReadMePage extends HTMLElement {
                     }
                 }
             }
-            // aria-current tells screen readers which section is current; the styles highlight it too
+            // aria-current="location" tells screen readers this link is where the reader is on the page (some say
+            // "current location"); the styles highlight it too
             side.querySelectorAll('a').forEach((link) => {
                 if (link.dataset.target === currentId) {
-                    link.setAttribute('aria-current', 'true');
+                    link.setAttribute('aria-current', 'location');
                 } else {
                     link.removeAttribute('aria-current');
                 }
