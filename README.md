@@ -1,13 +1,13 @@
 # Admin2 Site ReadMe Plugin
 
-**Admin2 Site ReadMe** is a [Grav](https://getgrav.org) plugin for Grav 2 that adds a **Site ReadMe** item to the Admin 2 sidebar. It shows a Markdown file, such as a README on GitHub, inside Admin, so the people editing a site can read its ReadMe, such as how-tos, guidelines or notes, where they work – and it stays up to date, as it's fetched from the file itself.
+**Admin2 Site ReadMe** is a [Grav](https://getgrav.org) plugin for Grav 2 that adds a **Site ReadMe** item to the Admin 2 sidebar. It shows a Markdown file, such as a README on GitHub, inside Admin, so the people editing a site can read its how-tos, guidelines or notes where they work – and it stays up to date, as it's fetched from the file itself.
 
 ## Where It Helps Most
 
-- **Demo sites** – a perfect partner for Grav 2's [demo mode](https://learn.getgrav.org/2/api/demo-mode), where visitors sign in to Admin 2 with a shared account to try a site. The Site ReadMe gives them the further information they need right there: what the demo shows, what to try, and `admin:` links that open each screen. Demo accounts can read it with no extra settings, as reading it changes nothing
-- **Online workshops** – about Grav or a project built on it, where people follow the steps in Admin as they go and tick off task lists, each person's ticks kept in their own browser
 - **Custom Grav sites** – when several people work on a site, such as developers, designers, content editors and the client, everyone has the project's information right in Admin: how-tos, content guidelines, who to contact and what's changed. Keep it as a page anyone can update in Admin, or as a file on GitHub alongside the site's code
 - **Any page of your own in Admin** – more generally, it's a simple way to add a Markdown page to Admin 2, with its own sidebar item, title and icon, without writing any code: a checklist, a style guide, release notes or a help page for your team
+- **Online workshops** – about Grav or a project built on it, where people follow the steps in Admin as they go and tick off task lists, each person's ticks kept in their own browser
+- **Demo sites** – a perfect partner for Grav 2's [demo mode](https://learn.getgrav.org/2/api/demo-mode), where visitors sign in to Admin 2 with a shared account to try a site. The Site ReadMe gives them the further information they need right there: what the demo shows, what to try, and `admin:` links that open each screen. Demo accounts can read it with no extra settings, as reading it changes nothing
 
 ## Installation
 
